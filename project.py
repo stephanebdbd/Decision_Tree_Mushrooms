@@ -23,6 +23,12 @@ class Node:
     
     def add_edge(self, label: str, child: 'Node'):
         return
+
+class Edge:
+    def __init__(self, parent: 'Node', child: 'Node', label: str):
+        self.parent_: 'Node' = parent
+        self.child_: 'Node' = child
+        self.label_: str = label
     
 def load_dataset(path: str):
     mushrooms = []
