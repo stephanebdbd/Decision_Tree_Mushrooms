@@ -14,9 +14,6 @@ class Mushroom:
     def get_attribute(self, name: str):
         return self.__attributes[name]
 
-    def __str__(self):
-        return f'Mushroom(edible={self.__edible}, attributes={self.__attributes})'
-
 class Node:
     def __init__(self, criterion: str, is_leaf: bool=False):
         self.edges_ = []
