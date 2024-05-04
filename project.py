@@ -122,7 +122,6 @@ def display(tree: Node):
                 print("    "*(tab+1) + child.criterion_)
     display_r(tree)
 
-
 def is_edible(root: Node, mushroom: Mushroom):
     while not root.is_leaf():
         n, i = len(root.edges_), 0
