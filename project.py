@@ -21,60 +21,50 @@ class Mushroom:
 class Node:
     def __init__(self, criterion: str, is_leaf: bool=False):
         self.edges_ = []
-        self.__criterion = criterion
-        self.__is_leaf = is_leaf
+        self.criterion_ = criterion
+        self.is_leaf_ = is_leaf
     
     def get_criterion(self):
-        return self.__criterion
+        return self.criterion_
 
-    @property
     def is_leaf(self):
-        return self.__is_leaf
+        return self.is_leaf_
     
-    def add_edge(self, label: str, child: 'Node'):
+    def add_edge(self, label: str, child: "Node"):
         self.edges_.append(Edge(self, child, label))
 
 class Edge:
-    def __init__(self, parent: 'Node', child: 'Node', label: str):
-        self.parent_: 'Node' = parent
-        self.child_: 'Node' = child
+    def __init__(self, parent: "Node", child: "Node", label: str):
+        self.parent_: "Node" = parent
+        self.child_: "Node" = child
         self.label_: str = label
+    
+    def get_label(self):
+        return self.label_
+
+    def get_child(self):
+        return self.child_
+    
+    def get_parent(self):
+        return self.parent_
     
 def load_dataset(path: str):
     mushrooms = []
-    with open(path, 'r') as file:
+    with open(path, "r") as file:
         data = list(csv.reader(file))
         attributes = data[0][1:]
         for row in data[1:]:
-            mushroom = Mushroom(row[0] == 'Yes')
+            mushroom = Mushroom(row[0] == "Yes")
             for attribute, value in zip(attributes, row[1:]):
                 mushroom.add_attribute(attribute, value)
             mushrooms.append(mushroom)
     return mushrooms
 
-def entropy(data: list):
-    pY = sum([mushroom.is_edible() for mushroom in data]) / len(data)
+def entropy(mushrooms: list[Mushroom]):
+    pY = sum([mushroom.is_edible() for mushroom in mushrooms]) / len(mushrooms)
     if pY == 0 or pY == 1:
         return 0
     return log2(1 - pY)*(pY - 1) - log2(pY)*pY
-
-def Ca_v(mushrooms : list[Mushroom], attribute : str, value : str):
-    res = []
-    for mushroom in mushrooms:
-        if mushroom.get_attribute(attribute) == value:
-            res.append(mushroom)
-    return res
-
-def get_information_gain(mushrooms: list[Mushroom], attribute : str):
-    h = entropy(mushrooms)
-    subs_attributes = get_sub_attributes(mushrooms, attribute)
-    h1 = 0
-    for sub_attribute in subs_attributes:
-        ca_v = Ca_v(mushrooms, attribute, sub_attribute)
-        pa_v = len(ca_v) / len(mushrooms)
-        h2 = entropy(ca_v)
-        h1 += pa_v * h2
-    return h - h1
 
 def get_sub_attributes(mushrooms: list[Mushroom], attribute: str):
     sub_attributes = set()
@@ -82,7 +72,24 @@ def get_sub_attributes(mushrooms: list[Mushroom], attribute: str):
         sub_attributes.add(mushroom.get_attribute(attribute))
     return sub_attributes
 
-def get_best_attribute(mushrooms: list[Mushroom], attributes: list[str]):
+def Ca_v(mushrooms : list[Mushroom], attribute : str):
+    sub_attributes = get_sub_attributes(mushrooms, attribute)
+    res = {sub_attribute: [] for sub_attribute in sub_attributes}
+    for mushroom in mushrooms:
+        res[mushroom.get_attribute(attribute)].append(mushroom)
+    return res
+
+def get_information_gain(mushrooms: list[Mushroom], attribute : str):
+    h, h1 = entropy(mushrooms), 0
+    ca_v = Ca_v(mushrooms, attribute)
+    for c in ca_v.values():
+        pa_v = len(c) / len(mushrooms)
+        h2 = entropy(c)
+        h1 += pa_v * h2
+    return h - h1
+
+def get_best_attribute(mushrooms: list[Mushroom]):
+    attributes = mushrooms[0].get_attributes()
     best_attribute = attributes[0]
     best_information_gain = get_information_gain(mushrooms, best_attribute)
     for attribute in attributes[1:]:
@@ -91,18 +98,83 @@ def get_best_attribute(mushrooms: list[Mushroom], attributes: list[str]):
             best_attribute = attribute
             best_information_gain = information_gain
     return best_attribute
-    
 
 def build_decision_tree(mushrooms: list[Mushroom]):
-    attributes = mushrooms[0].get_attributes()
-    return build_decision_tree_r(mushrooms, attributes)
-
-def build_decision_tree_r(mushrooms: list[Mushroom], attributes: list[str], r: Node = None):
-    pass
-    
+    best_attribute = get_best_attribute(mushrooms)
+    r = Node(best_attribute)
+    ca_v = Ca_v(mushrooms, best_attribute)
+    for sub_attribute, c in ca_v.items():
+        if entropy(c) == 0:
+            criterion = "Yes" if c[0].is_edible() else "No"
+            r.add_edge(sub_attribute, Node(criterion, True))
+        else:
+            r.add_edge(sub_attribute, build_decision_tree(c))
+    return r
 
 def display(tree: Node):
-    pass
+    def display_r(node: Node, tab: int=0):
+        for edge in node.edges_:
+            print("    "*tab + f"{node.criterion_} = {edge.get_label()}")
+            child = edge.get_child()
+            if not child.is_leaf():
+                display_r(child, tab+1)
+            else:
+                print("    "*(tab+1) + child.criterion_)
+    display_r(tree)
+
 
 def is_edible(root: Node, mushroom: Mushroom):
-    pass
+    while not root.is_leaf():
+        n, i = len(root.edges_), 0
+        finished = False
+        while i < n and not finished:
+            edge = root.edges_[i]
+            if mushroom.get_attribute(root.criterion_) == edge.get_label():
+                root = edge.get_child()
+                finished = True
+            i += 1
+    return root.criterion_ == "Yes"
+
+def boolean_tree(root: Node):
+    def boolean_tree_r(node: Node, tab: int=0):
+        print("    "*tab, end="")
+        edges = [edge for edge in node.edges_ if edge.get_child().criterion_ != "No"]
+        amount_or = -len(edges)+1
+        for edge in edges:
+            child = edge.get_child()
+            if not child.is_leaf():
+                par = len([i.get_child().criterion_ != "No" for i in child.edges_]) > 1
+                print(f"({node.criterion_} = {edge.get_label()}", end="")
+                print(" AND (" if par else " AND ")
+                boolean_tree_r(child, tab+1)
+                print(")" if par else "", end="")
+                print(f") OR " if amount_or != 0 else ")", end="")
+                print("\n" + "    "*tab, end="")
+                amount_or += 1
+            elif child.criterion_ == "Yes":
+                print(f"({node.criterion_} = {edge.get_label()})", end="")
+                print(f" OR " if amount_or != 0 else "", end="")
+                n = (amount_or+len(edges)+1) % 2 == 0 and amount_or != 0 and edges[amount_or].get_child().criterion_ == "Yes"
+                print("\n" + "    "*tab if n else "", end="")
+                amount_or += 1
+    print("(", end="")
+    boolean_tree_r(root)
+    print(")")
+
+"""
+def parentheses(path : str="message.txt"):
+    with open(path, "r") as file:
+        ouv, ferm = 0, 0
+        for line in file:
+            ouv += line.count("(")
+            ferm += line.count(")")
+        return ouv == ferm, ouv, ferm
+"""
+
+if __name__ == "__main__":
+    mushrooms = load_dataset("mushrooms.csv")
+    tree = build_decision_tree(mushrooms)
+    display(tree)
+    print()
+    boolean_tree(tree)
+    #print(parentheses())
