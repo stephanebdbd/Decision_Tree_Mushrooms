@@ -135,43 +135,43 @@ def is_edible(root: Node, mushroom: Mushroom):
             i += 1
     return root.criterion_ == "Yes"
 
-def print_tree_not_leaf(node: Node, child: Node, edge: Edge, tab: int, amount_or: int, file):
+def print_tree_not_leaf(node: Node, child: Node, edge: Edge, tab: int, amount_or: int):
     par = len([i.get_child().criterion_ != "No" for i in child.edges_]) > 1
-    print(f"({node.criterion_} = {edge.get_label()}", " AND (" if par else " AND ", file=file)
-    boolean_tree_r(child, file, tab+1)
-    print(")" if par else "", ") OR " if amount_or != 0 else ")", end="", file=file)
-    print("\n" + "    "*tab, end="", file=file)
+    print(f"({node.criterion_} = {edge.get_label()}", " AND (" if par else " AND ", sep="")
+    boolean_tree_r(child, tab+1)
+    print(")" if par else "", ") OR " if amount_or != 0 else ")", end="", sep="")
+    print("\n" + "    "*tab, end="")
 
-def print_tree_leaf(node: Node, child: Node, edge: Edge, edges: list[Edge], tab: int, amount_or: int, file):
-    print(f"({node.criterion_} = {edge.get_label()})", " OR " if amount_or != 0 else "", end="", file=file)
+def print_tree_leaf(node: Node, child: Node, edge: Edge, edges: list[Edge], tab: int, amount_or: int):
+    print(f"({node.criterion_} = {edge.get_label()})", " OR " if amount_or != 0 else "", end="", sep="")
     n = (amount_or+len(edges)+1) % 2 == 0 and amount_or != 0 and edges[amount_or].get_child().criterion_ == "Yes"
-    print("\n" + "    "*tab if n else "", end="", file=file)
+    print("\n" + "    "*tab if n else "", end="")
 
-def boolean_tree_r(node: Node, file, tab: int=0):
-    print("    "*tab, end="", file=file)
+def boolean_tree_r(node: Node, tab: int=0):
+    print("    "*tab, end="")
     edges = [edge for edge in node.edges_ if edge.get_child().criterion_ != "No"]
     amount_or = -len(edges)+1
     for edge in edges:
         child = edge.get_child()
         if not child.is_leaf():
-            print_tree_not_leaf(node, child, edge, tab, amount_or, file)
+            print_tree_not_leaf(node, child, edge, tab, amount_or)
         elif child.criterion_ == "Yes":
-            print_tree_leaf(node, child, edge, edges, tab, amount_or, file)
+            print_tree_leaf(node, child, edge, edges, tab, amount_or)
         amount_or += 1
 
 def boolean_tree(root: Node):
-    with open("message.txt", "w") as file:    
-        print("(", end="", file=file)
-        boolean_tree_r(root, file)
-        print(")", file=file)
+    print("(", end="")
+    boolean_tree_r(root)
+    print(")")
 
-def parentheses(path : str="message.txt"):
+"""def parentheses(path : str="message.txt"):
     with open(path, "r") as file:
         ouv, ferm = 0, 0
         for line in file:
             ouv += line.count("(")
             ferm += line.count(")")
         return ouv == ferm, ouv, ferm
+"""
 
 if __name__ == "__main__":
     mushrooms = load_dataset("mushrooms.csv")
@@ -179,4 +179,4 @@ if __name__ == "__main__":
     display(tree)
     print()
     boolean_tree(tree)
-    print(parentheses())
+    #print(parentheses())
