@@ -1,4 +1,3 @@
-import csv
 from math import log2
 
 class Mushroom:
@@ -49,9 +48,10 @@ class Edge:
         return self.parent_
     
 def load_dataset(path: str):
-    mushrooms = []
-    with open(path, "r") as file:
-        data = list(csv.reader(file))
+    mushrooms, data = [], []
+    with open(path, "r", encoding='UTF8') as file:
+        for line in file:
+            data.append(line.strip().split(','))
         attributes = data[0][1:]
         for row in data[1:]:
             mushroom = Mushroom(row[0] == "Yes")
@@ -134,48 +134,73 @@ def is_edible(root: Node, mushroom: Mushroom):
             i += 1
     return root.criterion_ == "Yes"
 
-def print_tree_not_leaf(node: Node, child: Node, edge: Edge, tab: int, amount_or: int):
+def print_not_leaf(node: Node, child: Node, edge: Edge, edges: list[Edge], tab: int, amount_or: int):
     par = len([i.get_child().criterion_ != "No" for i in child.edges_]) > 1
     print(f"({node.criterion_} = {edge.get_label()}", " AND (" if par else " AND ", sep="")
     boolean_tree_r(child, tab+1)
-    print(")" if par else "", ") OR " if amount_or != 0 else ")", end="", sep="")
+    print(")" if par else "", ") OR " if amount_or < len(edges) else ")", end="", sep="")
     print("\n" + "    "*tab, end="")
 
-def print_tree_leaf(node: Node, child: Node, edge: Edge, edges: list[Edge], tab: int, amount_or: int):
-    print(f"({node.criterion_} = {edge.get_label()})", " OR " if amount_or != 0 else "", end="", sep="")
-    n = (amount_or+len(edges)+1) % 2 == 0 and amount_or != 0 and edges[amount_or].get_child().criterion_ == "Yes"
-    print("\n" + "    "*tab if n else "", end="")
+def print_leaf(node: Node, child: Node, edge: Edge, edges: list[Edge], tab: int, amount_or: int):
+    print(f"({node.criterion_} = {edge.get_label()})", end="")
+    print(" OR " if amount_or < len(edges) else "", end="")
+    n = amount_or < len(edges) and edges[amount_or].get_child().criterion_ == "Yes"
+    print("\n" + "    "*tab if n and amount_or % 2 == 0 else "", end="")
 
 def boolean_tree_r(node: Node, tab: int=0):
     print("    "*tab, end="")
     edges = [edge for edge in node.edges_ if edge.get_child().criterion_ != "No"]
-    amount_or = -len(edges)+1
-    for edge in edges:
+    for amount_or, edge in enumerate(edges):
+        amount_or += 1
         child = edge.get_child()
         if not child.is_leaf():
-            print_tree_not_leaf(node, child, edge, tab, amount_or)
+            print_not_leaf(node, child, edge, edges, tab, amount_or)
         elif child.criterion_ == "Yes":
-            print_tree_leaf(node, child, edge, edges, tab, amount_or)
-        amount_or += 1
+            print_leaf(node, child, edge, edges, tab, amount_or)
 
 def boolean_tree(root: Node):
     print("(", end="")
     boolean_tree_r(root)
     print(")")
 
-"""def parentheses(path : str="message.txt"):
-    with open(path, "r") as file:
-        ouv, ferm = 0, 0
-        for line in file:
-            ouv += line.count("(")
-            ferm += line.count(")")
-        return ouv == ferm, ouv, ferm
-"""
+def print_criterions(leaves: list[str], file, node: Node, edge: Edge, if_: bool, tab: int):
+    criterions = False
+    if len(leaves) > 0:
+        if len(leaves) > 3:
+            print("    "*tab + f"criterions = {leaves}", file=file)
+            criterions = True
+        print("    "*tab, end="", file=file)
+        print("elif" if if_ and not criterions else "if", end="", file=file)
+        if_ = True
+        if len(leaves) == 1:
+            print(f" mushroom.get_attribute('{node.criterion_}') == '{leaves[0]}':", file=file)
+        else:
+            print(f" mushroom.get_attribute('{node.criterion_}')", end="", file=file)
+            print(" in criterions:" if criterions else f" in {leaves}:", file=file)
+            leaves.clear()
+        print("    "*(tab+1) + "return True", file=file)
 
-if __name__ == "__main__":
-    mushrooms = load_dataset("mushrooms.csv")
-    tree = build_decision_tree(mushrooms)
-    display(tree)
-    print()
-    boolean_tree(tree)
-    #print(parentheses())
+def print_if_leaves(leaves: list[str], file, node: Node, child: Node, edge: Edge, if_: bool, tab: int):
+    print("    "*tab, end="", file=file)
+    print("elif" if if_ else "if", end="", file=file)
+    print(f" mushroom.get_attribute('{node.criterion_}') == '{edge.get_label()}':", file=file)
+
+def to_python_r(node: Node, file, tab: int=1):
+    leaves, if_ = [], False
+    for edge in node.edges_:
+        child = edge.get_child()
+        if not child.is_leaf():
+            print_if_leaves(leaves, file, node, child, edge, if_, tab)
+            if_ = True
+            to_python_r(child, file, tab+1)
+        else:
+            if child.criterion_ == 'Yes':
+                leaves.append(edge.get_label())
+    print_criterions(leaves, file, node, edge, if_, tab)
+
+def to_python(dt: Node, path: str):
+    with open(path, "w") as file:
+        print("from project import *\n", file=file)
+        print("def is_edible(mushroom: Mushroom):", file=file)
+        to_python_r(dt, file)
+        print("    else:\n" + "    "*(2) + "return False", end="", file=file)
