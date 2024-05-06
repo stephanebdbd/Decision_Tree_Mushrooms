@@ -50,14 +50,9 @@ class Edge:
 
 class BooleanTree:
     def __init__(self, node: Node, tab: int=0):
-        self.node = node
-        self.edges_ = []
-        for edge in node.edges_:
-            if edge.get_child().criterion_ != "No":
-                self.edges_.append(edge)
-        self.tab = tab
-        self.amount_or = 0
-        self.edge = None
+        self.node, self.tab = node, tab
+        self.edges_ = [edge for edge in node.edges_ if edge.get_child().criterion_ != "No"]
+        self.amount_or, self.edge = 0, None
     
     def get_edge_child(self):
         edge = self.edge
@@ -65,13 +60,10 @@ class BooleanTree:
 
 class PythonScript:
     def __init__(self, file, node:Node, tab: int=1):
-        self.leaves = []
-        self.file = file
-        self.tab = tab
-        self.node = node
+        self.leaves, self.node = [], node
+        self.file, self.tab = file, tab
+        self.edge, self.if_ = None, False
         self.edges_ = node.edges_
-        self.edge = None
-        self.if_ = False
         
     def clear_leaves(self):
         self.leaves.clear()
@@ -206,20 +198,19 @@ def boolean_tree(root: Node):
 def print_criterions(ps: PythonScript):
     tab, file, node, leaves, if_ = ps.tab, ps.file, ps.node, ps.leaves, ps.if_
     criterions = False
-    if len(leaves) > 0:
-        if len(leaves) > 3:
-            print("    "*tab + f"criterions = {leaves}", file=file)
-            criterions = True
-        print("    "*tab, end="", file=file)
-        print("elif" if if_ and not criterions else "if", end="", file=file)
-        ps.if_, if_ = True, True
-        if len(leaves) == 1:
-            print(f" mushroom.get_attribute('{node.criterion_}') == '{leaves[0]}':", file=file)
-        else:
-            print(f" mushroom.get_attribute('{node.criterion_}')", end="", file=file)
-            print(" in criterions:" if criterions else f" in {leaves}:", file=file)
-            ps.clear_leaves()
-        print("    "*(tab+1) + "return True", file=file)
+    if len(leaves) > 3:
+        print("    "*tab + f"criterions = {leaves}", file=file)
+        criterions = True
+    print("    "*tab, end="", file=file)
+    print("elif" if if_ and not criterions else "if", end="", file=file)
+    ps.if_, if_ = True, True
+    if len(leaves) == 1:
+        print(f" mushroom.get_attribute('{node.criterion_}') == '{leaves[0]}':", file=file)
+    elif len(leaves) > 0:
+        print(f" mushroom.get_attribute('{node.criterion_}')", end="", file=file)
+        print(" in criterions:" if criterions else f" in {leaves}:", file=file)
+        ps.clear_leaves()
+    print("    "*(tab+1) + "return True", file=file)
 
 def print_if_leaves(ps: PythonScript):
     tab, file, node, edge, if_ = ps.tab, ps.file, ps.node, ps.edge, ps.if_
@@ -234,8 +225,7 @@ def to_python_r(ps: PythonScript):
         if not child.is_leaf():
             print_if_leaves(ps)
             to_python_r(PythonScript(ps.file, child, ps.tab+1))
-        else:
-            if child.criterion_ == 'Yes':
+        elif child.criterion_ == 'Yes':
                 ps.leaves_append()
     print_criterions(ps)
 
