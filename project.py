@@ -1,3 +1,4 @@
+import sys
 from math import log2
 
 class Mushroom:
@@ -204,3 +205,16 @@ def to_python(dt: Node, path: str):
         print("def is_edible(mushroom: Mushroom):", file=file)
         to_python_r(dt, file)
         print("    else:\n" + "    "*(2) + "return False", end="", file=file)
+
+def main(argv, argc):
+    path1 = "mushrooms.csv" if argc < 2 else argv[1]
+    path2 = "decision_tree.py" if argc < 3 else argv[2]
+    mushrooms = load_dataset(path1)
+    dt = build_decision_tree(mushrooms)
+    display(dt)
+    print()
+    boolean_tree(dt)
+    to_python(dt, path2)
+
+if __name__ == "__main__":
+    main(sys.argv, len(sys.argv))
