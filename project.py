@@ -1,4 +1,4 @@
-import sys
+import sys, csv
 from math import log2
 
 class Mushroom:
@@ -34,9 +34,9 @@ class Node:
         self.edges_.append(Edge(self, child, label))
 
 class Edge:
-    def __init__(self, parent: "Node", child: "Node", label: str):
-        self.parent_: "Node" = parent
-        self.child_: "Node" = child
+    def __init__(self, parent: Node, child: Node, label: str):
+        self.parent_: Node = parent
+        self.child_: Node = child
         self.label_: str = label
     
     def get_label(self):
@@ -47,12 +47,47 @@ class Edge:
     
     def get_parent(self):
         return self.parent_
+
+class BooleanTree:
+    def __init__(self, node: Node, tab: int=0):
+        self.node = node
+        self.edges_ = []
+        for edge in node.edges_:
+            if edge.get_child().criterion_ != "No":
+                self.edges_.append(edge)
+        self.tab = tab
+        self.amount_or = 0
+        self.edge = None
+    
+    def get_edge_child(self):
+        edge = self.edge
+        return edge.get_child()
+
+class PythonScript:
+    def __init__(self, file, node:Node, tab: int=1):
+        self.leaves = []
+        self.file = file
+        self.tab = tab
+        self.node = node
+        self.edges_ = node.edges_
+        self.edge = None
+        self.if_ = False
+        
+    def clear_leaves(self):
+        self.leaves.clear()
+    
+    def edge_get_child(self):
+        edge = self.edge
+        return edge.get_child()
+    
+    def leaves_append(self):
+        label = self.edge.get_label()
+        self.leaves.append(label)
     
 def load_dataset(path: str):
-    mushrooms, data = [], []
-    with open(path, "r", encoding='UTF8') as file:
-        for line in file:
-            data.append(line.strip().split(','))
+    mushrooms = []
+    with open(path, "r", encoding='UTF-8') as file:
+        data = list(csv.reader(file))
         attributes = data[0][1:]
         for row in data[1:]:
             mushroom = Mushroom(row[0] == "Yes")
@@ -81,8 +116,7 @@ def Ca_v(mushrooms : list[Mushroom], attribute : str):
     return res
 
 def get_information_gain(mushrooms: list[Mushroom], attribute : str):
-    h, h1 = entropy(mushrooms), 0
-    ca_v = Ca_v(mushrooms, attribute)
+    h, h1, ca_v = entropy(mushrooms), 0, Ca_v(mushrooms, attribute)
     for c in ca_v.values():
         pa_v = len(c) / len(mushrooms)
         h2 = entropy(c)
@@ -135,36 +169,40 @@ def is_edible(root: Node, mushroom: Mushroom):
             i += 1
     return root.criterion_ == "Yes"
 
-def print_not_leaf(node: Node, child: Node, edge: Edge, edges: list[Edge], tab: int, amount_or: int):
+def print_not_leaf(bt: BooleanTree):
+    node, edges, tab = bt.node, bt.edges_, bt.tab
+    amount_or, child, edge = bt.amount_or, bt.get_edge_child(), bt.edge
     par = len([i.get_child().criterion_ != "No" for i in child.edges_]) > 1
     print(f"({node.criterion_} = {edge.get_label()}", " AND (" if par else " AND ", sep="")
-    boolean_tree_r(child, tab+1)
+    boolean_tree_r(BooleanTree(child, tab+1))
     print(")" if par else "", ") OR " if amount_or < len(edges) else ")", end="", sep="")
     print("\n" + "    "*tab, end="")
 
-def print_leaf(node: Node, child: Node, edge: Edge, edges: list[Edge], tab: int, amount_or: int):
+def print_leaf(bt: BooleanTree):
+    node, edges, tab = bt.node, bt.edges_, bt.tab
+    amount_or, edge = bt.amount_or, bt.edge
     print(f"({node.criterion_} = {edge.get_label()})", end="")
     print(" OR " if amount_or < len(edges) else "", end="")
-    n = amount_or < len(edges) and edges[amount_or].get_child().criterion_ == "Yes"
+    n = amount_or < len(edges)-1 and edges[amount_or].get_child().criterion_ == "Yes"
     print("\n" + "    "*tab if n and amount_or % 2 == 0 else "", end="")
 
-def boolean_tree_r(node: Node, tab: int=0):
-    print("    "*tab, end="")
-    edges = [edge for edge in node.edges_ if edge.get_child().criterion_ != "No"]
-    for amount_or, edge in enumerate(edges):
-        amount_or += 1
-        child = edge.get_child()
+def boolean_tree_r(bt: BooleanTree):
+    print("    "*bt.tab, end="")
+    for bt.amount_or, bt.edge in enumerate(bt.edges_):
+        bt.amount_or += 1
+        child = bt.get_edge_child()
         if not child.is_leaf():
-            print_not_leaf(node, child, edge, edges, tab, amount_or)
+            print_not_leaf(bt)
         elif child.criterion_ == "Yes":
-            print_leaf(node, child, edge, edges, tab, amount_or)
+            print_leaf(bt)
 
 def boolean_tree(root: Node):
     print("(", end="")
-    boolean_tree_r(root)
+    boolean_tree_r(BooleanTree(root))
     print(")")
 
-def print_criterions(leaves: list[str], file, node: Node, edge: Edge, if_: bool, tab: int):
+def print_criterions(ps: PythonScript):
+    tab, file, node, leaves, if_ = ps.tab, ps.file, ps.node, ps.leaves, ps.if_
     criterions = False
     if len(leaves) > 0:
         if len(leaves) > 3:
@@ -172,38 +210,38 @@ def print_criterions(leaves: list[str], file, node: Node, edge: Edge, if_: bool,
             criterions = True
         print("    "*tab, end="", file=file)
         print("elif" if if_ and not criterions else "if", end="", file=file)
-        if_ = True
+        ps.if_, if_ = True, True
         if len(leaves) == 1:
             print(f" mushroom.get_attribute('{node.criterion_}') == '{leaves[0]}':", file=file)
         else:
             print(f" mushroom.get_attribute('{node.criterion_}')", end="", file=file)
             print(" in criterions:" if criterions else f" in {leaves}:", file=file)
-            leaves.clear()
+            ps.clear_leaves()
         print("    "*(tab+1) + "return True", file=file)
 
-def print_if_leaves(leaves: list[str], file, node: Node, child: Node, edge: Edge, if_: bool, tab: int):
+def print_if_leaves(ps: PythonScript):
+    tab, file, node, edge, if_ = ps.tab, ps.file, ps.node, ps.edge, ps.if_
     print("    "*tab, end="", file=file)
     print("elif" if if_ else "if", end="", file=file)
     print(f" mushroom.get_attribute('{node.criterion_}') == '{edge.get_label()}':", file=file)
 
-def to_python_r(node: Node, file, tab: int=1):
-    leaves, if_ = [], False
-    for edge in node.edges_:
-        child = edge.get_child()
+def to_python_r(ps: PythonScript):
+    for edge in ps.edges_:
+        ps.edge = edge
+        child = ps.edge_get_child()
         if not child.is_leaf():
-            print_if_leaves(leaves, file, node, child, edge, if_, tab)
-            if_ = True
-            to_python_r(child, file, tab+1)
+            print_if_leaves(ps)
+            to_python_r(PythonScript(ps.file, child, ps.tab+1))
         else:
             if child.criterion_ == 'Yes':
-                leaves.append(edge.get_label())
-    print_criterions(leaves, file, node, edge, if_, tab)
+                ps.leaves_append()
+    print_criterions(ps)
 
 def to_python(dt: Node, path: str):
     with open(path, "w") as file:
         print("from project import *\n", file=file)
         print("def is_edible(mushroom: Mushroom):", file=file)
-        to_python_r(dt, file)
+        to_python_r(PythonScript(file, dt))
         print("    else:\n" + "    "*(2) + "return False", end="", file=file)
 
 def main(argv, argc):
