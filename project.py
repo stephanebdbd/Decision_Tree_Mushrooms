@@ -173,9 +173,11 @@ def print_not_leaf(bt: BooleanTree):
     node, edges, tab = bt.node, bt.edges_, bt.tab
     amount_or, child, edge = bt.amount_or, bt.get_edge_child(), bt.edge
     par = len([i.get_child().criterion_ != "No" for i in child.edges_]) > 1
-    print(f"({node.criterion_} = {edge.get_label()}", " AND (" if par else " AND ", sep="")
+    print(f"({node.criterion_} = {edge.get_label()}", end="")
+    print(" AND (" if par else " AND ")
     boolean_tree_r(BooleanTree(child, tab+1))
-    print(")" if par else "", ") OR " if amount_or < len(edges) else ")", end="", sep="")
+    print(")" if par else "", end="")
+    print(") OR " if amount_or < len(edges) else ")", end="")
     print("\n" + "    "*tab, end="")
 
 def print_leaf(bt: BooleanTree):
