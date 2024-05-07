@@ -236,7 +236,7 @@ def to_python_r(ps: PythonScript, script: str=""):
     return script
 
 def to_python(dt: Node, path: str):
-    script = "from project import *\ndef is_edible(mushroom: Mushroom):\n"
+    script = "from project import *\n\ndef is_edible(mushroom: Mushroom):\n"
     script += to_python_r(PythonScript(dt))
     script += "    else:\n" + "    "*(2) + "return False"
     with open(path, "w") as file:
