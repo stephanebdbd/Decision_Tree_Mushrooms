@@ -1,7 +1,6 @@
 import unittest
 from project import *
 
-
 class TestMushroomDataLoading(unittest.TestCase):
     def setUp(self):
         self.mushrooms = load_dataset('mushrooms.csv')
@@ -46,7 +45,29 @@ class TestBuildTree(unittest.TestCase):
         self.assertTrue(is_edible(root, make_mushroom({'odor': 'Almond'})))
         self.assertFalse(is_edible(root, make_mushroom({'odor': 'None', 'spore-print-color': 'Green'})))
 
-class PersonnalTestBuildTree(unittest.TestCase):
+class PersonnalTestsPart1(unittest.TestCase):
+    def setUp(self):
+        self.mushrooms = load_dataset('mushrooms.csv')
+        self.test_tree_root = build_decision_tree(self.mushrooms)
+    
+    def test_entropy(self):
+        edible = [m for m in self.mushrooms if m.is_edible()]
+        poisonous = [m for m in self.mushrooms if not m.is_edible()]
+        self.assertEqual(entropy(edible), 0)
+        self.assertEqual(entropy(poisonous), 0)
+        self.assertEqual(entropy(self.mushrooms), 0.9990678968724604)
+    
+    def test_information_gain(self):
+        tree = self.test_tree_root
+        self.assertEqual(tree.criterion_, get_best_attribute(self.mushrooms))
+        self.assertEqual(get_information_gain(self.mushrooms, 'odor'), 0.9060749773839998)
+        mushrooms = [m for m in self.mushrooms if m.get_attribute('odor') == 'None']
+        tree_e = [e for e in tree.edges_ if e.get_label() == "None"][0]
+        tree = tree_e.child_
+        self.assertEqual(tree.criterion_, get_best_attribute(mushrooms))
+        self.assertEqual(get_information_gain(mushrooms, 'spore-print-color'), 0.14493721491485229)
+
+class PersonnalTestsPart2(unittest.TestCase):
     def setUp(self):
         self.mushrooms = load_dataset('mushrooms.csv')
         self.test_tree_root = build_decision_tree(self.mushrooms)
@@ -57,15 +78,83 @@ class PersonnalTestBuildTree(unittest.TestCase):
         self.assertTrue(is_edible(root, make_mushroom({'odor': 'Almond'})))
         self.assertFalse(is_edible(root, make_mushroom({'odor': 'None', 'spore-print-color': 'Green'})))
     
+    def test_display(self):
+        tree_d = display(self.test_tree_root).split()
+        tree_d = [t.strip() for t in tree_d if "=" not in t]
+        tree = self.test_tree_root
+        self.assertEqual(tree.criterion_, "odor")
+        stack = {tree.criterion_ : [(edge, edge.get_parent()) for edge in tree.edges_]}
+        while sum(len(l) for l in stack.values()) > 0:
+            criterion, label = tree_d.pop(0), tree_d.pop(0)
+            edge, node = stack[criterion].pop(0)
+            if tree_d[0] in ["No", "Yes"]:
+                node = edge.get_child()
+                criterion = tree_d.pop(0)
+                self.assertTrue(node.is_leaf())
+            self.assertEqual(node.criterion_, criterion)
+            self.assertEqual(edge.get_label(), label)
+            if not node.is_leaf():
+                self.modify_stack(stack, edge)
+
+    def modify_stack(self, stack, edge):
+        node = edge.get_child()
+        suite = [(e, e.get_parent()) for e in node.edges_]
+        if len(suite) > 0:
+            next_c = suite[0][-1].criterion_
+            if not next_c in stack:
+                stack[next_c] = suite
+            else:
+                stack[next_c].extend(suite)
+            
     def test_to_python(self):
         to_python(self.test_tree_root, self.path)
         from decision_tree import is_edible
+        self.assertTrue(is_edible(make_mushroom({'odor': 'Almond'})))
+        self.assertFalse(is_edible(make_mushroom({'odor': 'None', 'spore-print-color': 'Green'})))
 
 class TestBooleanTree(unittest.TestCase):
     def setUp(self):
         self.mushrooms = load_dataset('mushrooms.csv')
         self.tree = build_decision_tree(self.mushrooms)
+        self.boolean_tree = boolean_tree(self.tree)
+    
+    def test_count_parenthesis(self):
+        tree = self.boolean_tree
+        self.assertEqual(tree.count("("), tree.count(")"))
+        
+        tree2 = build_decision_tree(self.mushrooms)
+        bt2 = boolean_tree(tree2)
+        self.assertEqual(bt2.count("("), bt2.count(")"))
 
+        tree3 = build_decision_tree(self.mushrooms)
+        bt3 = boolean_tree(tree3)
+        self.assertEqual(bt3.count("("), bt3.count(")"))
+    
+    def test_boolean_tree(self):
+        tree = self.tree
+        tree_bt = self.boolean_tree
+        tree_bt = tree_bt.replace("(", "").replace(")", "")
+        tree_bt = tree_bt.split()
+        tree_bt = [t.strip() for t in tree_bt if t.strip() not in ["OR", "AND", "="]]
+        self.assertEqual(tree.criterion_, "odor")
+        stack = {tree.criterion_ : [(edge, edge.get_parent()) for edge in tree.edges_ if edge.get_child().criterion_ != "No"]}
+        while sum(len(l) for l in stack.values()) > 0:
+            criterion, label = tree_bt.pop(0), tree_bt.pop(0)
+            edge, node = stack[criterion].pop(0)
+            self.assertEqual(node.criterion_, criterion)
+            self.assertEqual(edge.get_label(), label)
+            if not node.is_leaf():
+                self.modify_stack(stack, edge)
+    
+    def modify_stack(self, stack, edge):
+        node = edge.get_child()
+        suite = [(e, e.get_parent()) for e in node.edges_ if e.get_child().criterion_ != "No"]
+        if len(suite) > 0:
+            next_c = suite[0][-1].criterion_
+            if not next_c in stack:
+                stack[next_c] = suite
+            else:
+                stack[next_c].extend(suite)
 
 if __name__ == '__main__':
     unittest.main()
