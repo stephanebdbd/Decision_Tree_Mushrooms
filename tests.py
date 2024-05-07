@@ -1,6 +1,7 @@
 import unittest
 from project import *
 
+
 class TestMushroomDataLoading(unittest.TestCase):
     def setUp(self):
         self.mushrooms = load_dataset('mushrooms.csv')
@@ -44,6 +45,26 @@ class TestBuildTree(unittest.TestCase):
         root = self.test_tree_root
         self.assertTrue(is_edible(root, make_mushroom({'odor': 'Almond'})))
         self.assertFalse(is_edible(root, make_mushroom({'odor': 'None', 'spore-print-color': 'Green'})))
+
+class PersonnalTestBuildTree(unittest.TestCase):
+    def setUp(self):
+        self.mushrooms = load_dataset('mushrooms.csv')
+        self.test_tree_root = build_decision_tree(self.mushrooms)
+        self.path = "decision_tree.py"
+    
+    def test_is_edible(self):
+        root = self.test_tree_root
+        self.assertTrue(is_edible(root, make_mushroom({'odor': 'Almond'})))
+        self.assertFalse(is_edible(root, make_mushroom({'odor': 'None', 'spore-print-color': 'Green'})))
+    
+    def test_to_python(self):
+        to_python(self.test_tree_root, self.path)
+        from decision_tree import is_edible
+
+class TestBooleanTree(unittest.TestCase):
+    def setUp(self):
+        self.mushrooms = load_dataset('mushrooms.csv')
+        self.tree = build_decision_tree(self.mushrooms)
 
 
 if __name__ == '__main__':

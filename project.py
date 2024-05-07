@@ -59,9 +59,9 @@ class BooleanTree:
         return edge.get_child()
 
 class PythonScript:
-    def __init__(self, file, node:Node, tab: int=1):
+    def __init__(self, node:Node, tab: int=1):
         self.leaves, self.node = [], node
-        self.file, self.tab = file, tab
+        self.tab = tab
         self.edge, self.if_ = None, False
         self.edges_ = node.edges_
         
@@ -139,15 +139,18 @@ def build_decision_tree(mushrooms: list[Mushroom]):
     return r
 
 def display(tree: Node):
-    def display_r(node: Node, tab: int=0):
+    def display_r(node: Node, tab: int=0, tree_str:str=""):
         for edge in node.edges_:
-            print("    "*tab + f"{node.criterion_} = {edge.get_label()}")
+            tree_str += "    "*tab + f"{node.criterion_} = {edge.get_label()}\n"
             child = edge.get_child()
             if not child.is_leaf():
-                display_r(child, tab+1)
+                tree_str += display_r(child, tab+1)
             else:
-                print("    "*(tab+1) + child.criterion_)
-    display_r(tree)
+                tree_str += "    "*(tab+1) + child.criterion_ + "\n"
+        return tree_str
+    tree_str = display_r(tree)
+    print(tree_str)
+    return tree_str
 
 def is_edible(root: Node, mushroom: Mushroom):
     while not root.is_leaf():
@@ -161,80 +164,83 @@ def is_edible(root: Node, mushroom: Mushroom):
             i += 1
     return root.criterion_ == "Yes"
 
-def print_not_leaf(bt: BooleanTree):
+def print_not_leaf(bt: BooleanTree, tree: str=""):
     node, edges, tab = bt.node, bt.edges_, bt.tab
     amount_or, child, edge = bt.amount_or, bt.get_edge_child(), bt.edge
     par = len([i.get_child().criterion_ != "No" for i in child.edges_]) > 1
-    print(f"({node.criterion_} = {edge.get_label()}", end="")
-    print(" AND (" if par else " AND ")
-    boolean_tree_r(BooleanTree(child, tab+1))
-    print(")" if par else "", end="")
-    print(") OR " if amount_or < len(edges) else ")", end="")
-    print("\n" + "    "*tab, end="")
+    tree += f"({node.criterion_} = {edge.get_label()}"
+    tree += " AND (\n" if par else " AND \n"
+    tree += boolean_tree_r(BooleanTree(child, tab+1))
+    tree += (")" if par else "") + (") OR " if amount_or < len(edges) else ")")
+    tree += "\n" + "    "*tab
+    return tree
 
-def print_leaf(bt: BooleanTree):
+def print_leaf(bt: BooleanTree, tree: str=""):
     node, edges, tab = bt.node, bt.edges_, bt.tab
     amount_or, edge = bt.amount_or, bt.edge
-    print(f"({node.criterion_} = {edge.get_label()})", end="")
-    print(" OR " if amount_or < len(edges) else "", end="")
+    tree += f"({node.criterion_} = {edge.get_label()})"
+    tree += " OR " if amount_or < len(edges) else ""
     n = amount_or < len(edges)-1 and edges[amount_or].get_child().criterion_ == "Yes"
-    print("\n" + "    "*tab if n and amount_or % 2 == 0 else "", end="")
+    tree += "\n" + "    "*tab if n and amount_or % 2 == 0 else ""
+    return tree
 
-def boolean_tree_r(bt: BooleanTree):
-    print("    "*bt.tab, end="")
+def boolean_tree_r(bt: BooleanTree, tree: str=""):
+    tree += "    "*bt.tab
     for bt.amount_or, bt.edge in enumerate(bt.edges_):
         bt.amount_or += 1
         child = bt.get_edge_child()
         if not child.is_leaf():
-            print_not_leaf(bt)
+            tree += print_not_leaf(bt)
         elif child.criterion_ == "Yes":
-            print_leaf(bt)
+            tree += print_leaf(bt)
+    return tree
 
 def boolean_tree(root: Node):
-    print("(", end="")
-    boolean_tree_r(BooleanTree(root))
-    print(")")
+    tree = "(" + boolean_tree_r(BooleanTree(root)) + ")"
+    print(tree)
+    return tree
 
-def print_criterions(ps: PythonScript):
-    tab, file, node, leaves, if_ = ps.tab, ps.file, ps.node, ps.leaves, ps.if_
+def print_criterions(ps: PythonScript, script: str=""):
+    tab, node, leaves, if_ = ps.tab, ps.node, ps.leaves, ps.if_
     criterions = False
     if len(leaves) > 3:
-        print("    "*tab + f"criterions = {leaves}", file=file)
+        script += "    "*tab + f"criterions = {leaves}\n"
         criterions = True
-    print("    "*tab, end="", file=file)
-    print("elif" if if_ and not criterions else "if", end="", file=file)
+    script += "    "*tab + ("elif" if if_ and not criterions else "if")
     ps.if_, if_ = True, True
     if len(leaves) == 1:
-        print(f" mushroom.get_attribute('{node.criterion_}') == '{leaves[0]}':", file=file)
+        script += f" mushroom.get_attribute('{node.criterion_}') == '{leaves[0]}':\n"
     elif len(leaves) > 0:
-        print(f" mushroom.get_attribute('{node.criterion_}')", end="", file=file)
-        print(" in criterions:" if criterions else f" in {leaves}:", file=file)
+        script += f" mushroom.get_attribute('{node.criterion_}')"
+        script += " in criterions:\n" if criterions else f" in {leaves}:\n"
         ps.clear_leaves()
-    print("    "*(tab+1) + "return True", file=file)
+    script += "    "*(tab+1) + "return True\n"
+    return script
 
-def print_if_leaves(ps: PythonScript):
-    tab, file, node, edge, if_ = ps.tab, ps.file, ps.node, ps.edge, ps.if_
-    print("    "*tab, end="", file=file)
-    print("elif" if if_ else "if", end="", file=file)
-    print(f" mushroom.get_attribute('{node.criterion_}') == '{edge.get_label()}':", file=file)
+def print_if_leaves(ps: PythonScript, script: str=""):
+    tab, node, edge, if_ = ps.tab, ps.node, ps.edge, ps.if_
+    script += "    "*tab + ("elif" if if_ else "if")
+    script += f" mushroom.get_attribute('{node.criterion_}') == '{edge.get_label()}':\n"
+    return script
 
-def to_python_r(ps: PythonScript):
+def to_python_r(ps: PythonScript, script: str=""):
     for edge in ps.edges_:
         ps.edge = edge
         child = ps.edge_get_child()
         if not child.is_leaf():
-            print_if_leaves(ps)
-            to_python_r(PythonScript(ps.file, child, ps.tab+1))
+            script += print_if_leaves(ps)
+            script += to_python_r(PythonScript(child, ps.tab+1))
         elif child.criterion_ == 'Yes':
                 ps.leaves_append()
-    print_criterions(ps)
+    script += print_criterions(ps)
+    return script
 
 def to_python(dt: Node, path: str):
+    script = "from project import *\ndef is_edible(mushroom: Mushroom):\n"
+    script += to_python_r(PythonScript(dt))
+    script += "    else:\n" + "    "*(2) + "return False"
     with open(path, "w") as file:
-        print("from project import *\n", file=file)
-        print("def is_edible(mushroom: Mushroom):", file=file)
-        to_python_r(PythonScript(file, dt))
-        print("    else:\n" + "    "*(2) + "return False", end="", file=file)
+        file.write(script)
 
 def main(argv, argc):
     path1 = "mushrooms.csv" if argc < 2 else argv[1]
