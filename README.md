@@ -1,62 +1,80 @@
 # AlgoProject
 
-Bienvenue dans le dépôt **AlgoProject** ! Ce projet met en œuvre une série d'algorithmes en Python, offrant ainsi une base idéale pour l'apprentissage et l'expérimentation.
+Welcome to the **AlgoProject** repository! This project implements a series of algorithms in Python, providing an ideal foundation for learning and experimentation.
 
-## 🚀 Objectif du projet
+## 🚀 Project Goal
 
-**AlgoProject** vise à fournir :
-- Des implémentations claires de différents algorithmes.
-- Une plateforme éducative pour explorer, apprendre et perfectionner vos compétences en algorithmique.
+**AlgoProject** aims to provide:
 
-## 📂 Structure du projet
+* Clear implementations of various algorithms.
+* An educational platform to explore, learn, and refine your algorithmic skills.
 
-Le projet est organisé comme suit :
-- **`src/`** : Contient le code source des implémentations d'algorithmes.
-- **`tests/`** : Contient les tests unitaires pour garantir la fiabilité des algorithmes.
+## 📂 Project Structure
 
-## 🛠️ Prérequis
+The project is organized as follows:
 
-Avant de commencer, assurez-vous de disposer de l'environnement suivant :
-- **Python** (version >= 3.7)
-- Installez les bibliothèques nécessaires :
-   ```bash
-   pip install -r requirements.txt
-   ```
+* **`src/`**: Contains the source code for the algorithm implementations.
+* **`tests/`**: Contains unit tests to ensure the reliability of the algorithms.
 
-## ⚡ Utilisation
+## 🛠️ Prerequisites
 
-1. Clonez ce dépôt sur votre machine :
-   ```bash
-   git clone https://github.com/stephanebdbd/AlgoProject.git
-   cd AlgoProject
-   ```
-2. Exécutez les scripts Python dans le répertoire `src/` pour explorer les algorithmes.
-3. Lancez les tests unitaires pour vérifier le comportement des algorithmes :
-   ```bash
-   python -m unittest discover tests/
-   ```
+Before you begin, ensure you have the following environment set up:
+
+* **Python** (version >= 3.7)
+* Install the necessary libraries:
+```bash
+pip install -r requirements.txt
+
+```
+
+
+
+## ⚡ Usage
+
+1. Clone this repository to your machine:
+```bash
+git clone https://github.com/stephanebdbd/AlgoProject.git
+cd AlgoProject
+
+```
+
+
+2. Run the Python scripts in the `src/` directory to explore the algorithms.
+3. Run the unit tests to verify the behavior of the algorithms:
+```bash
+python -m unittest discover tests/
+
+```
+
+
 
 ## 🤝 Contribution
 
-Contributions bienvenues ! Voici comment contribuer :
-1. Forkez ce dépôt.
-2. Créez une branche pour vos modifications :
-   ```bash
-   git checkout -b feature/nom-de-la-fonctionnalite
-   ```
-3. Testez vos modifications avec les tests existants ou nouveaux.
-4. Proposez une Pull Request !
+Contributions are welcome! Here is how to contribute:
 
-Assurez-vous que vos contributions suivent les normes de qualité du projet.
+1. Fork this repository.
+2. Create a branch for your changes:
+```bash
+git checkout -b feature/feature-name
 
-## 📜 Licence
+```
 
-Ce projet est sous licence MIT. Consultez le fichier [LICENSE](LICENSE) pour plus d'informations.
+
+3. Test your changes with existing or new tests.
+4. Submit a Pull Request!
+
+Please ensure your contributions follow the project's quality standards.
+
+## 📜 License
+
+This project is licensed under the MIT License. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for more information.
 
 ## 📧 Contact
 
-Auteur : [stephanebdbd](https://github.com/stephanebdbd)  
-N'hésitez pas à poser vos questions ou à soumettre vos suggestions !
+Author: [stephanebdbd](https://github.com/stephanebdbd)
+
+Feel free to ask questions or submit your suggestions!
 
 ---
-Merci d'avoir visité ce projet. Amusez-vous à coder ! 🚀
+
+Thanks for visiting this project. Happy coding! 🚀
