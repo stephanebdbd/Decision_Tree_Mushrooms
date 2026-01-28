@@ -1,4 +1,4 @@
-# AlgoProject
+# Decision Tree Implementation (Mushroom Classification)
 
 Welcome to the **AlgoProject** repository! This project implements a series of algorithms in Python, providing an ideal foundation for learning and experimentation.
 
