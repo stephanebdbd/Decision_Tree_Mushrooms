@@ -1,10 +1,10 @@
 # Decision Tree Implementation (Mushroom Classification)
 
-Welcome to the **AlgoProject** repository! This project implements a series of algorithms in Python, providing an ideal foundation for learning and experimentation.
+Welcome to the **Decision Tree Implementation** repository! This project implements a series of algorithms in Python, providing an ideal foundation for learning and experimentation.
 
 ## 🚀 Project Goal
 
-**AlgoProject** aims to provide:
+**Decision Tree Implementation** aims to provide:
 
 * Clear implementations of various algorithms.
 * An educational platform to explore, learn, and refine your algorithmic skills.
@@ -33,8 +33,8 @@ pip install -r requirements.txt
 
 1. Clone this repository to your machine:
 ```bash
-git clone https://github.com/stephanebdbd/AlgoProject.git
-cd AlgoProject
+git clone https://github.com/stephanebdbd/Decision_Tree_Mushrooms.git
+cd Decision_Tree_Mushrooms
 
 ```
 
